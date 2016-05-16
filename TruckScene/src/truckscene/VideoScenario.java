@@ -72,12 +72,15 @@ public class VideoScenario implements Scenario {
     		return;
     	}
     	
+
+        videoClip.speed(1);
+    	videoClip.play();
     	videoClip.jump(videoStartPos);
         startTime = applet.millis();
     }
     
     public void stop(){
-    	videoClip.stop();
+    	videoClip.stop(); // stop
     }
     
     public void setup(){

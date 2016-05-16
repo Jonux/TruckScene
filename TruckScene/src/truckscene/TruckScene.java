@@ -171,6 +171,13 @@ public class TruckScene extends PApplet {
 				initNextScenario();
 			}
 			return 0;
+			
+		// restart
+		} else if (activeMode == 'r' && scenarioIdx != 0) {
+			scenarios.get(scenarioIdx).stop();
+			scenarioIdx = scenarios.size() - 1;
+			println("Restarting Scenario");
+			initNextScenario();
 		}
 
 		// Automatic changing
@@ -290,8 +297,10 @@ public class TruckScene extends PApplet {
 				activeMode = 'd';
 			}
 			return;
+		} else if (key == 'r' && scenarioIdx != 0) {
+			activeMode = 'r';
+			return;
 		}
-		
 		/*
 		// Manual changing, TODO later
 		if (!dashboard.isWeatherModeChanging()) {
