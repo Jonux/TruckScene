@@ -53,10 +53,17 @@ public class VideoScenario implements Scenario {
     		return;
     	}
     	
-        videoClip.speed(1);
+        //videoClip.speed(1);
+    	//System.out.println("Starting video playing from position: " + videoStartPos);
     	videoClip.play();
+    	
+    	
+    	//System.out.println("playing");
     	videoClip.jump(videoStartPos);
+    	
+    	//System.out.println("Startime: ");
         startTime = applet.millis();
+        // System.out.println("Startime: " + startTime);
     }
     
     public void stop(){

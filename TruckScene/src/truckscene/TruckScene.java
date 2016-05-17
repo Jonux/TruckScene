@@ -86,7 +86,7 @@ public class TruckScene extends PApplet {
 		PApplet.runSketch(new String[] { dashboard.getClass().getName() }, dashboard);
 		
 		// Magic delay, wait to other thread to get ready. TODO: do this properly
-		delay(300);
+		// delay(300);
 		
 		// Start scenarios
 		restartScenarios();
@@ -104,16 +104,14 @@ public class TruckScene extends PApplet {
 		println("Scene Starting: " + scenarioIdx);
 		nextScene.start();
 		
-		try {
-			scenarioTimer = millis();
-		} catch(Exception e){
-			scenarioTimer = 0;
-		}
+		scenarioTimer = millis();
 		modeChangeDenied = 0;
 		userCommand = UserCommand.UNKNOWN;
-
+		println("Scene timer set: " + scenarioTimer);
+		
 		// Beginning of each scenario initialize the small screen's Weather mode
 		dashboard.setWeatherMode(startWeatherModes[scenarioIdx]);
+		println("Dashboard weather " + dashboard.frameRate);
 	}
 
 	private void restartScenarios() {
