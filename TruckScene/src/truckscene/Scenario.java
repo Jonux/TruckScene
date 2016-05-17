@@ -1,8 +1,18 @@
 package truckscene;
 
+/**
+ * Abstract interface for truck scenarios
+ * @author Jonux
+ *
+ */
 public interface Scenario {
+	
+	// returns true, if the scenario is running
 	public boolean draw();
-	public void setup();
+	
+	// Start the scenario
 	public void start();
+	
+	// Stop the scenario
     public void stop();
 }

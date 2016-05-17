@@ -22,8 +22,6 @@ public class ImageScenario implements Scenario {
     private int startTime;
     private int userInput = 0;
     
-    // private String text;
-
     public ImageScenario(PApplet applet, String imageName, int scenarioTime) {
         this.applet = applet;
         this.image = applet.loadImage(imageName);
@@ -31,14 +29,11 @@ public class ImageScenario implements Scenario {
         this.startTime = applet.millis();
     }
     
-    public void setup(){
-    	this.startTime = applet.millis();
-    }
-    
     public void start() {
     	this.startTime = applet.millis();
     }
-    public void stop(){
+    
+    public void stop() {
 
     }
     
@@ -47,14 +42,7 @@ public class ImageScenario implements Scenario {
     	if (image != null) {
     		applet.image(image, 0, 0, applet.width, applet.height);
     	}
-        
 
-        // TODO: add IO interaction here
-//        if (applet.mousePressed && scenarioTime < 0) {
-//            userInput = 1;
-//            System.out.println("Mouse Pressed");
-//            return false;
-//        } else 
         if (scenarioTime > 0 && startTime + scenarioTime < applet.millis()) {
         	System.out.println("Scene changed!");
         	return false;

@@ -20,24 +20,14 @@ import truckscene.DashboardApplet.WeatherMode;
  */
 public class VideoScenario implements Scenario {
     
-    private String videoClipName;
-
     private PApplet applet;
     private Movie videoClip;
-    private DashboardApplet dashboard;
-    
-    private int userInput = 0;
-    private boolean endPhaseStarted = false;
+    private String videoClipName;
 
     private DoubleBar safetyBarSet;
-    //private DoubleBar efficiencyBarSet;
-    private TwinBar lazynessBarSet;
     private PGraphics barSetBackground;
     
-    private ArrayList<ModeChange> modeChanges;
-    private int modeChangesIdx = 0;
     private int startTime = 0;
-    
     private float videoStartPos;
     private float videoEndPos;
     
@@ -46,10 +36,7 @@ public class VideoScenario implements Scenario {
         this.videoClipName = videoClipName;
 
         this.safetyBarSet = new DoubleBar(applet, "Fuel Efficiency", "Safety", new Color(0,0,200), (int)(applet.width*0.7), 135, 0.0f, 0.0f);
-        //this.efficiencyBarSet = new TwinBar(applet, "New", "Old", "+3%", "Fuel Efficiency", new Color(0,0,200), 500, 135, 0.5f, 0.5f);
-       // this.lazynessBarSet = new TwinBar(applet, "New", "Old", "+20%", "Automation Level", new Color(0,0,200), 300, 135, 0.6f, 0.8f);
         this.barSetBackground = applet.createGraphics(applet.width, 145);
-        //this.modeChanges = modeChanges; , ArrayList<ModeChange> modeChanges
         this.startTime = applet.millis();
         
         this.videoEndPos = videoEndPos;
@@ -63,7 +50,6 @@ public class VideoScenario implements Scenario {
     
     public void setBarsStartSizes(float safetyProgress, float fuelEffProgress) {
     	safetyBarSet.setBar12Progress(safetyProgress, fuelEffProgress, 0);
-    	//efficiencyBarSet.setBar12Progress(fuelEffProgress);
     }
 
     public void start() {
@@ -72,7 +58,6 @@ public class VideoScenario implements Scenario {
     		return;
     	}
     	
-
         videoClip.speed(1);
     	videoClip.play();
     	videoClip.jump(videoStartPos);
@@ -83,7 +68,8 @@ public class VideoScenario implements Scenario {
     	videoClip.stop(); // stop
     }
     
-    public void setup(){
+
+    public void setup(float safetyProgress, float fuelEffProgress) {
         videoClip = new Movie(applet, videoClipName);
         videoClip.frameRate(30);
 
@@ -98,6 +84,8 @@ public class VideoScenario implements Scenario {
         barSetBackground.beginDraw();
         barSetBackground.background(40,40,40);
         barSetBackground.endDraw();
+        
+        setBarsStartSizes(safetyProgress, fuelEffProgress);
         
     }
     
