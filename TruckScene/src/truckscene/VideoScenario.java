@@ -6,13 +6,8 @@
 package truckscene;
 
 import java.awt.Color;
-import java.util.ArrayList;
-
-import com.sun.xml.internal.bind.v2.schemagen.xmlschema.List;
-
 import processing.core.*;
 import processing.video.*;
-import truckscene.DashboardApplet.WeatherMode;
 
 /**
  *
@@ -99,7 +94,6 @@ public class VideoScenario implements Scenario {
         applet.image(barSetBackground, 0, 0);
 
         this.safetyBarSet.draw(applet.width/2 - safetyBarSet.getWidth()/2, 5);
-       // this.efficiencyBarSet.draw(applet.width/2 + 100, 5);
 
         if (videoClip.time() >= videoEndPos) {
         	return false;

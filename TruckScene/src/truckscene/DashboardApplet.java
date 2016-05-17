@@ -23,6 +23,7 @@ class DashboardApplet extends PApplet {
 	private int timeToNextMode;
 	private WeatherMode nextWeatherMode;
 	
+	private boolean modeActivationStarted;
 	private PFont textFont;
 	
 	private WeatherMode weatherMode;
@@ -42,6 +43,7 @@ class DashboardApplet extends PApplet {
 		this.dataFolderPath = dataFolderPath;
 		this.weatherMode = WeatherMode.UNKNOWN;
 		this.nextWeatherMode = WeatherMode.UNKNOWN;
+		this.modeActivationStarted = false;
 	}
 	
 	public void settings() {
@@ -52,16 +54,18 @@ class DashboardApplet extends PApplet {
 		frameRate(60);
 		surface.setResizable(true);
 		
+		// Load weather icons
 		for (String s : weatherFiles){
 			images.add(loadShape(dataFolderPath + "" + s));
 		}
+		// Load inactive weather icons
 		for (String s : weatherFilesI){
-			//System.out.println("loading file " + s);
 			inactiveImages.add(loadShape(dataFolderPath + "" + s));
 		}
 		
 		this.textFont = createFont("Arial Bold", 36);
 		textFont(textFont);
+		modeActivationStarted = false;
 	}
 
 	private void drawBar(int x, int y, int sx, int sy, double percent) {
@@ -74,11 +78,7 @@ class DashboardApplet extends PApplet {
 	
 	public void draw() {
 		background(0);
-		
-//		if (this.weatherMode == WeatherMode.UNKNOWN) {
-//			return;
-//		}
-		
+
         // Mode is changing
         if (isWeatherModeChanging()) {
 	        if (modeActivationTimer + timeToNextMode > millis()) {
@@ -90,7 +90,7 @@ class DashboardApplet extends PApplet {
 	    		shape(images.get(nextWeatherMode.value),  (int)(this.width*0.50),  (int)(this.height*0.1), (int)(this.width*0.5), (int)(this.height*0.5));
 	    		
 	    		double progress = ((double)(millis() - modeActivationTimer)) / timeToNextMode;
-	    		//println(modeActivationTimer + " " + timeToNextMode + " " + millis() + " " + progress);
+	    		// println(modeActivationTimer + " " + timeToNextMode + " " + millis() + " " + progress);
 	    		drawBar((int)(this.width*0.1), (int)(this.height*0.59), (int)(this.width*0.8), (int)(this.height*0.05), progress);
 	        } else {
 	        	weatherMode = nextWeatherMode;
@@ -106,23 +106,28 @@ class DashboardApplet extends PApplet {
         		shape(inactiveImages.get(i),  (int)(this.width*0.25)*i,  (int)(this.height*0.75), (int)(this.width*0.25), (int)(this.height*0.25));
         	}
         }
-        /*
-        if (!isWeatherModeChanging()) {
-            textSize(36);
-            textAlign(CENTER);
-            fill(255,255,255);
-            text(activeMessages[weatherMode.value], (int)(this.width*0.5), (int)(this.height*(50/400.0)));
-    		shape(images.get(weatherMode.value),  (int)(this.width*0.25),  (int)(this.height*0.5), (int)(this.width*0.5), (int)(this.height*0.5));
-        }
-        */
 
 		redraw();
 	}
 	
-	public void startModeActivation(WeatherMode nextMode, int timeToNextMode){
-		this.modeActivationTimer = millis();
-		this.timeToNextMode = timeToNextMode;
-		this.nextWeatherMode = nextMode;
+	/*
+	 * Starts mode activation
+	 */
+	public void startModeActivation(WeatherMode nextMode, int timeToNextMode) {
+		startModeActivation(nextMode, timeToNextMode, false);
+	}
+	
+	public void startModeActivation(WeatherMode nextMode, int timeToNextMode, boolean override){
+		if (!modeActivationStarted || override) { 
+			this.modeActivationTimer = millis();
+			this.timeToNextMode = timeToNextMode;
+			this.nextWeatherMode = nextMode;
+			this.modeActivationStarted = true;
+		}
+	}
+	
+	public boolean hasModeActivationStarted() {
+		return modeActivationStarted;
 	}
 	
 	public boolean isWeatherModeChanging() {
@@ -140,6 +145,7 @@ class DashboardApplet extends PApplet {
 	public void setWeatherMode(WeatherMode w){
 		weatherMode = w;
 		nextWeatherMode = w;
+		this.modeActivationStarted = false;
 	}
 	
 	public WeatherMode getWeatherMode(){

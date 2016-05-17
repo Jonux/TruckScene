@@ -1,18 +1,11 @@
 package truckscene;
 
-import java.awt.Frame;
-
 import processing.core.PApplet;
 import processing.serial.Serial;
-import processing.core.*;
-import processing.video.*;
 import truckscene.DashboardApplet.WeatherMode;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Enumeration;
-
-import com.sun.xml.internal.messaging.saaj.util.transform.EfficientStreamingTransformer;
 
 public class TruckScene extends PApplet {
 
@@ -23,11 +16,10 @@ public class TruckScene extends PApplet {
 	final private String dataFolderPath = "data/";
 
 	private ArrayList<Scenario> scenarios;
+	private UserCommand userCommand;
 	private int scenarioIdx;
-	private char activeMode = 'a';
-
+	
 	private int scenarioTimer;
-	private int sceneStepCount = 0;
 	private int modeChangeDenied = 0;
 
 	// Scenario setup
@@ -41,12 +33,19 @@ public class TruckScene extends PApplet {
 	private float[] fuelChangesWhenApproved = { 0.0f, 0.33f, 0.7f, 0.4f, 0.41f, 0.0f };
 	private float[] safetyChangesWhenApproved = { 0.0f, -0.06f, 0.8f, -0.04f, -0.02f, 0.0f };
 
-	private WeatherMode[] startWeatherModes = { WeatherMode.UNKNOWN, WeatherMode.ECO, WeatherMode.SLIPPERY,
+	private WeatherMode[] startWeatherModes = { 
+			WeatherMode.UNKNOWN, WeatherMode.ECO, WeatherMode.SLIPPERY,
 			WeatherMode.ECO, WeatherMode.ECO, WeatherMode.UNKNOWN };
 
+	// How many milliseconds to wait before asking the question from the beginning of the scenario
+	private int[] sceneQuestionTimes = {0 , 5000, 5000, 5000, 5000, 0};
+	
+	
 	// Summary variables
 	private double safetyOverallChange = 0;
 	private double fuelOverallChange = 0;
+
+	
 
 	public TruckScene() {
 		super();
@@ -86,36 +85,11 @@ public class TruckScene extends PApplet {
 		dashboard = new DashboardApplet(dataFolderPath);
 		PApplet.runSketch(new String[] { dashboard.getClass().getName() }, dashboard);
 		
+		// Magic delay, wait to other thread to get ready. TODO: do this properly
+		delay(300);
+		
 		// Start scenarios
 		restartScenarios();
-	}
-
-	// Serial format:
-	// <6-bits for switch state><tab delimiter><char for gear>
-	// where the chars are p,r,n,d,s,- and + for park, reverse, neutral, drive,
-	// smart-auto and plus/minus
-	// return -1 if denied, 0 nothing happened, 1 approved
-	public int readSerial() {
-		activeMode = 'a';
-		try {
-			while (myPort.available() > 0) {
-				// int inByte = myPort.read();
-				String line = myPort.readStringUntil('\n');
-				if (line == null)
-					continue;
-				println("Serial Input: " + line);
-
-				String[] q = splitTokens(line);
-				if (q != null && q.length > 1 && q[1] != null && q[1].length() > 0) {
-					// println("Mode Selected: " + q[1].charAt(0) + " whole
-					// line: " + line);
-					activeMode = q[1].toLowerCase().charAt(0);
-				}
-			}
-		} catch (Exception e) {
-		}
-
-		return handleUserEvent();
 	}
 
 	private void initNextScenario() {
@@ -130,10 +104,13 @@ public class TruckScene extends PApplet {
 		println("Scene Starting: " + scenarioIdx);
 		nextScene.start();
 		
-		scenarioTimer = millis();
-		sceneStepCount = 0;
+		try {
+			scenarioTimer = millis();
+		} catch(Exception e){
+			scenarioTimer = 0;
+		}
 		modeChangeDenied = 0;
-		activeMode = 'a';
+		userCommand = UserCommand.UNKNOWN;
 
 		// Beginning of each scenario initialize the small screen's Weather mode
 		dashboard.setWeatherMode(startWeatherModes[scenarioIdx]);
@@ -146,96 +123,13 @@ public class TruckScene extends PApplet {
 		initNextScenario();
 	}
 	
-	private int handleUserEvent() {
-		// nothing happened
-		if (activeMode == 'a')
-			return 0;
 
-		// Start
-		if (scenarioIdx == 0) {
-			if (activeMode == 's') {
-				initNextScenario();
-			}
-			return 0;
-			// end
-		} else if (scenarioIdx == scenarios.size() - 1) {
-			if (activeMode == 'd') {
-				restartScenarios();
-			}
-			return 0;
 
-			// restart
-		} else if (activeMode == 'r' && scenarioIdx != 0) {
-			restartScenarios();
-		} else if (activeMode == 'n' && scenarioIdx != 0) {
-			initNextScenario();
-		}
-
-		// Automatic changing
-		// Yes (+)
-		if (activeMode == '+' && sceneStepCount > 0 && dashboard.isWeatherModeChanging()) {
-			dashboard.completeWeatherModeSelection(true);
-			modeChangeDenied = 0;
-			return 1;
-
-			// No (-)
-		} else if (activeMode == '-' && sceneStepCount > 0 && dashboard.isWeatherModeChanging()) {
-			dashboard.completeWeatherModeSelection(false);
-			modeChangeDenied = 1;
-			return -1;
-		}
-		return 0;
-	}
-
-	public void draw() {
-		background(0);
-		boolean running = scenarios.get(scenarioIdx).draw();
-
-		// Move forward on scenarios
-		if (!running) {
-			initNextScenario();
-		}
-
-		// Build interactions to scenarios
-		switch (scenarioIdx) {
-		case 0:
-			break;
-		case 1:
-			if (scenarioTimer + 5000 < millis() && sceneStepCount == 0) {
-				dashboard.startModeActivation(WeatherMode.SLIPPERY, 8000);
-				sceneStepCount = 1;
-			}
-			break;
-		case 2:
-			if (scenarioTimer + 5000 < millis() && sceneStepCount == 0) {
-				dashboard.startModeActivation(WeatherMode.ECO, 8000);
-				sceneStepCount = 1;
-			}
-			break;
-		case 3:
-			if (scenarioTimer + 5000 < millis() && sceneStepCount == 0) {
-				dashboard.startModeActivation(WeatherMode.UPHILL, 8000);
-				sceneStepCount = 1;
-			}
-			break;
-		case 4:
-			if (scenarioTimer + 8000 < millis() && sceneStepCount == 0) {
-				dashboard.startModeActivation(WeatherMode.WET, 8000);
-				sceneStepCount = 1;
-			}
-			break;
-		case 5:
-
-			textSize(46);
-			textAlign(CENTER);
-			fill(255);
-			text(String.format("%c%.1f%%", (safetyOverallChange >= 0) ? '+' : '-', safetyOverallChange), 1170, 640);
-			text(String.format("%c%.1f%%", (fuelOverallChange >= 0) ? '+' : '-', fuelOverallChange * 10), 760, 640);
-			break;
-		default:
-
-		}
-
+	/*
+	 * Update top bar sizes based on user inputs
+	 */
+	public void updateBarSizes() {
+		// handle keyboard based events
 		int keyEvent = handleUserEvent();
 
 		// read user inputs
@@ -247,7 +141,7 @@ public class TruckScene extends PApplet {
 			DoubleBar b1 = ((VideoScenario) s).getSafetyBar();
 
 			if (serialEvent > 0 || keyEvent > 0
-					|| (modeChangeDenied == 0 && sceneStepCount > 0 && !dashboard.isWeatherModeChanging())) {
+					|| (modeChangeDenied == 0 && dashboard.hasModeActivationStarted() && !dashboard.isWeatherModeChanging())) {
 				if (!b1.isBarInProgress() && !(b1.getBar2Process() == safetyChangesWhenApproved[scenarioIdx]
 						&& b1.getBar1Process() == fuelChangesWhenApproved[scenarioIdx])) {
 					safetyOverallChange += abs(safetyChangesWhenApproved[scenarioIdx] - b1.getBar2Process());
@@ -257,57 +151,141 @@ public class TruckScene extends PApplet {
 			}
 		}
 	}
+	
+	public void draw() {
+		background(0);
+		boolean running = scenarios.get(scenarioIdx).draw();
 
-	public static void main(String _args[]) {
-		PApplet.main(new String[] { truckscene.TruckScene.class.getName() });
+		// Move forward on scenarios
+		if (!running) {
+			initNextScenario();
+		}
+
+		// Build scenarios
+		switch (scenarioIdx) {
+		case 0:
+			break;
+		case 1:
+			if (scenarioTimer + sceneQuestionTimes[1] < millis()) {
+				dashboard.startModeActivation(WeatherMode.SLIPPERY, 8000);
+			}
+			break;
+		case 2:
+			if (scenarioTimer + sceneQuestionTimes[2] < millis()) {
+				dashboard.startModeActivation(WeatherMode.ECO, 8000);
+			}
+			break;
+		case 3:
+			if (scenarioTimer + sceneQuestionTimes[3] < millis()) {
+				dashboard.startModeActivation(WeatherMode.UPHILL, 8000);
+			}
+			break;
+		case 4:
+			if (scenarioTimer + sceneQuestionTimes[4] < millis()) {
+				dashboard.startModeActivation(WeatherMode.WET, 8000);
+			}
+			break;
+		case 5:
+			textSize(46);
+			textAlign(CENTER);
+			fill(255);
+			text(String.format("%c%.1f%%", (safetyOverallChange >= 0) ? '+' : '-', safetyOverallChange), 1170, 640);
+			text(String.format("%c%.1f%%", (fuelOverallChange >= 0) ? '+' : '-', fuelOverallChange * 10), 760, 640);
+			break;
+		default:
+
+		}
+
+		// Handle user inputs and update bar sizes
+		updateBarSizes();
 	}
 
+
+	
 	/**
 	 * USER Interface keyboard (yes , no , start) DEBUG purposes
 	 */
 	@Override
 	public void keyReleased() {
-		println("key pressed " + scenarioIdx + " w: " + dashboard.isWeatherModeChanging() + " key: " + key);
-
-		activeMode = 'a';
-
-		// Start
-		if (scenarioIdx == 0) {
-			if (key == 's') {
-				activeMode = 's';
-			}
-			return;
-		} else if (scenarioIdx == scenarios.size() - 1) {
-			if (key == 'd') {
-				activeMode = 'd';
-			}
-			return;
-		} else if (key == 'r' && scenarioIdx != 0) {
-			activeMode = 'r';
-			return;
-		} else if (key == 'n' && scenarioIdx != 0) {
-			activeMode = 'n';
-			return;
-		}
-		
-		/*
-		 * // Manual changing, TODO later if hardware allows it
-		 * (!dashboard.isWeatherModeChanging()) { if (key == 'e')
-		 * dashboard.setWeatherMode(WeatherMode.ECO); if (key == 'r')
-		 * dashboard.setWeatherMode(WeatherMode.SLIPPERY); if (key == 't')
-		 * dashboard.setWeatherMode(WeatherMode.UPHILL); if (key == 'y')
-		 * dashboard.setWeatherMode(WeatherMode.WET); if (key == 'u')
-		 * dashboard.setWeatherMode(WeatherMode.UNKNOWN); return; }
-		 */
-
-		// Automatic changing
-		// Yes (+)
-		if (key == 'y') {
-			activeMode = '+';
-			// No (-)
-		} else if (key == 'n') {
-			activeMode = '-';
-		}
+		userCommand = UserCommand.fromKeyboard(key);
+		println(scenarioIdx + ") Key pressed: " + key + "      Command: " + userCommand.getValue());
 	}
 
+	// Serial format:
+	// <6-bits for switch state><tab delimiter><char for gear>
+	// where the chars are p,r,n,d,s,- and + for park, reverse, neutral, drive,
+	// smart-auto and plus/minus
+	// return -1 if denied, 0 nothing happened, 1 approved
+	public int readSerial() {
+		userCommand = UserCommand.UNKNOWN;
+		try {
+			while (myPort.available() > 0) {
+				String line = myPort.readStringUntil('\n');
+				if (line == null)
+					continue;
+				println("Serial Input: " + line);
+
+				String[] q = splitTokens(line);
+				if (q != null && q.length > 1 && q[1] != null && q[1].length() > 0) {
+					userCommand = UserCommand.fromSerial(q[1].toLowerCase().charAt(0));
+					println("Mode Selected: " + q[1].charAt(0) + "      Command " + userCommand.getValue());
+				}
+			}
+		} catch (Exception e) { }
+
+		// Handle user command
+		return handleUserEvent();
+	}
+	
+	/**
+	 * Handle user interaction
+	 * @return 1 if topBarSet needs to be updated, else 0
+	 */
+	private int handleUserEvent() {
+
+		switch (userCommand) {
+		case UNKNOWN: 
+			break;
+		case START:
+			if (scenarioIdx == 0) {
+				initNextScenario();
+			}
+			break;
+		case END: 
+			if (scenarioIdx == scenarios.size() - 1) {
+				restartScenarios();
+			}
+			break;
+		case RESTART: 
+			if (scenarioIdx != 0) {
+				restartScenarios();
+			}
+			break;
+		case NEXT: 
+			if (scenarioIdx != 0) {
+				initNextScenario();
+			}
+			break;
+		case APPROVE: 
+			if (dashboard.hasModeActivationStarted() && dashboard.isWeatherModeChanging()) {
+				dashboard.completeWeatherModeSelection(true);
+				modeChangeDenied = 0;
+				return 1;
+			}
+			break;
+		case DENY: 
+			if (dashboard.hasModeActivationStarted() && dashboard.isWeatherModeChanging()) {
+				dashboard.completeWeatherModeSelection(false);
+				modeChangeDenied = 1;
+				return -1;
+			}
+			break;
+		}
+		return 0;
+	}
+	
+	
+	public static void main(String _args[]) {
+		PApplet.main(new String[] { truckscene.TruckScene.class.getName() });
+	}
 }

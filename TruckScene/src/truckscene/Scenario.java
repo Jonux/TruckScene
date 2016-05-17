@@ -3,7 +3,6 @@ package truckscene;
 /**
  * Abstract interface for truck scenarios
  * @author Jonux
- *
  */
 public interface Scenario {
 	

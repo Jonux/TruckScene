@@ -10,7 +10,6 @@ public class DoubleBar {
 
 	private String bar1;
 	private String bar2;
-	private String bar1Percent;
 	
 	private float bar1process;
 	private float bar2process;
