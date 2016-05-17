@@ -54,20 +54,22 @@ public class VideoScenario implements Scenario {
     	}
     	
         //videoClip.speed(1);
-    	//System.out.println("Starting video playing from position: " + videoStartPos);
+    	System.out.println("Starting video playing from position: " + videoStartPos);
+    	
+    	
+    	// Black Magic:
+    	// Hack to go around Processing-video jump-location bug. 
+    	// It is NOT possible to jump on a video before playing it.
+    	videoClip.pause();
     	videoClip.play();
-    	
-    	
-    	//System.out.println("playing");
     	videoClip.jump(videoStartPos);
-    	
-    	//System.out.println("Startime: ");
+    	System.out.println("Playing Video: " + videoClip.time() + "    "  + videoClip.duration());
+
         startTime = applet.millis();
-        // System.out.println("Startime: " + startTime);
     }
     
     public void stop(){
-    	videoClip.stop(); // stop
+    	videoClip.pause();
     }
     
 
@@ -77,7 +79,7 @@ public class VideoScenario implements Scenario {
 
         if (videoClip != null) {
         	videoClip.speed(1);
-        	videoClip.loop();
+        	videoClip.play();
 	        System.out.println(this.videoClip + "   " + videoStartPos + " pos: " + videoClip.time() + "   duration: "+ this.videoClip.duration());
         } else {
         	System.err.println("Unable to load video: " + this.videoClip);

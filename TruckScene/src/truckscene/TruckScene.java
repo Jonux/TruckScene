@@ -3,9 +3,11 @@ package truckscene;
 import processing.core.PApplet;
 import processing.serial.Serial;
 import truckscene.DashboardApplet.WeatherMode;
+import truckscene.SceneData.SceneType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class TruckScene extends PApplet {
 
@@ -21,56 +23,52 @@ public class TruckScene extends PApplet {
 	
 	private int scenarioTimer;
 	private int modeChangeDenied = 0;
-
-	// Scenario setup
-	// ECO -> SLIP (rainy)
-	// SLIP -> ECO (sunny)
-	// ECO -> HILL (winter uphil)
-	// ECO -> WET (rainy)
-	private float[] fuelEffAtStart = { 0.0f, 0.67f, 0.0f, 0.6f, 0.75f, 0.0f };
-	private float[] safetyAtStart = { 0.0f, -0.5f, 0.8f, -0.3f, -0.47f, 0.0f };
-
-	private float[] fuelChangesWhenApproved = { 0.0f, 0.33f, 0.7f, 0.4f, 0.41f, 0.0f };
-	private float[] safetyChangesWhenApproved = { 0.0f, -0.06f, 0.8f, -0.04f, -0.02f, 0.0f };
-
-	private WeatherMode[] startWeatherModes = { 
-			WeatherMode.UNKNOWN, WeatherMode.ECO, WeatherMode.SLIPPERY,
-			WeatherMode.ECO, WeatherMode.ECO, WeatherMode.UNKNOWN };
-
-	// How many milliseconds to wait before asking the question from the beginning of the scenario
-	private int[] sceneQuestionTimes = {0 , 5000, 5000, 5000, 5000, 0};
 	
+	/*
+	 * Scenario setup
+	 * 
+	 * ECO -> SLIP (rainy)
+	 * SLIP -> ECO (sunny)
+	 * ECO -> HILL (winter uphill)
+	 * ECO -> WET (rainy)
+	 */
+	private final SceneData[] scenes = {
+			new SceneData(WeatherMode.UNKNOWN, dataFolderPath + "startView.png"),
+			new SceneData(0.67f, -0.5f, 0.33f, -0.05f, WeatherMode.ECO, WeatherMode.SLIPPERY, 15.0f, 35.0f, 5000, 8000, 3000, dataFolderPath + "badWeather.mp4"),
+			new SceneData(0.0f, 0.8f, 0.7f, 0.8f, WeatherMode.SLIPPERY, WeatherMode.ECO, 10.0f, 25.0f, 5000, 8000, 3000, dataFolderPath + "normal_road.mp4"),
+			new SceneData(0.6f, -0.3f, 0.4f, -0.08f, WeatherMode.ECO, WeatherMode.UPHILL, 0.0f, 15.0f, 5000, 8000, 3000, dataFolderPath + "slipperyUphill.mp4"),
+			new SceneData(0.75f, -0.47f, 0.41f, -0.02f, WeatherMode.ECO, WeatherMode.WET, 0.0f, 15.0f, 5000, 8000, 3000, dataFolderPath + "WetWeather.mp4"),
+			new SceneData(WeatherMode.UNKNOWN, dataFolderPath + "summaryView.png")
+	};
 	
 	// Summary variables
 	private double safetyOverallChange = 0;
 	private double fuelOverallChange = 0;
-
+	private ArrayList<QuestionStatus> sceneAnswers;
+	public enum QuestionStatus {
+		UNKNOWN, APPROVED, DENIED
+	}
 	
-
+	
 	public TruckScene() {
 		super();
 		scenarioIdx = 0;
+		scenarios = new ArrayList<Scenario>();
+		sceneAnswers = new ArrayList<QuestionStatus>();
 	}
 
 	public void settings() {
 		size(1920, 1024);
 		fullScreen(2);
 	}
-
+	
 	public void setup() {
 		// Main display
 		super.setup();
 		frameRate(30);
 
 		// Setup scenarios
-		scenarios = new ArrayList<Scenario>(Arrays.asList(
-				new ImageScenario(this, dataFolderPath + "startView.png", -1),
-				new VideoScenario(this, dataFolderPath + "badWeather.mp4", 15.0f, 35.0f),
-				new VideoScenario(this, dataFolderPath + "normal_road.mp4", 10.0f, 25.0f),
-				new VideoScenario(this, dataFolderPath + "slipperyUphill.mp4", 0.0f, 15.0f),
-				new VideoScenario(this, dataFolderPath + "WetWeather.mp4", 0.0f, 15.0f),
-				new ImageScenario(this, dataFolderPath + "summaryView.png", -1)
-		));
+		initializeScenarios();
 		
 		// Serial port communication setup
 		System.out.println("Available Serial Ports\nCurrent Serial Port Idx: " + serialPortIdx);
@@ -86,12 +84,27 @@ public class TruckScene extends PApplet {
 		PApplet.runSketch(new String[] { dashboard.getClass().getName() }, dashboard);
 		
 		// Magic delay, wait to other thread to get ready. TODO: do this properly
-		// delay(300);
+		delay(300);
 		
 		// Start scenarios
 		restartScenarios();
 	}
 
+	public void initializeScenarios() {
+		scenarios = new ArrayList<Scenario>();
+		sceneAnswers = new ArrayList<QuestionStatus>();
+		for (SceneData s : scenes) {
+			if (s.sceneType == SceneType.IMAGE) {
+				scenarios.add(new ImageScenario(this, s.fileName, -1));
+			} else if (s.sceneType == SceneType.VIDEO) {
+				scenarios.add(new VideoScenario(this, s.fileName, s.videoStartTime, s.videoEndTime));
+			}
+			
+			// Summary answers to the questions
+			sceneAnswers.add(QuestionStatus.UNKNOWN);
+		}
+	}
+	
 	private void initNextScenario() {
 		scenarios.get(scenarioIdx).stop();
 		scenarioIdx = (scenarioIdx + 1) % scenarios.size();
@@ -99,7 +112,7 @@ public class TruckScene extends PApplet {
 		println("Setting up scenario idx: " + scenarioIdx);
 		Scenario nextScene = scenarios.get(scenarioIdx);
 		if (nextScene instanceof VideoScenario) {
-			((VideoScenario) nextScene).setup(safetyAtStart[scenarioIdx], fuelEffAtStart[scenarioIdx]);
+			((VideoScenario) nextScene).setup(scenes[scenarioIdx].safetyAtStart, scenes[scenarioIdx].fuelEfficiencyAtStart);
 		}
 		println("Scene Starting: " + scenarioIdx);
 		nextScene.start();
@@ -110,7 +123,7 @@ public class TruckScene extends PApplet {
 		println("Scene timer set: " + scenarioTimer);
 		
 		// Beginning of each scenario initialize the small screen's Weather mode
-		dashboard.setWeatherMode(startWeatherModes[scenarioIdx]);
+		dashboard.setWeatherMode(scenes[scenarioIdx].startWeatherMode);
 		println("Dashboard weather " + dashboard.frameRate);
 	}
 
@@ -140,11 +153,11 @@ public class TruckScene extends PApplet {
 
 			if (serialEvent > 0 || keyEvent > 0
 					|| (modeChangeDenied == 0 && dashboard.hasModeActivationStarted() && !dashboard.isWeatherModeChanging())) {
-				if (!b1.isBarInProgress() && !(b1.getBar2Process() == safetyChangesWhenApproved[scenarioIdx]
-						&& b1.getBar1Process() == fuelChangesWhenApproved[scenarioIdx])) {
-					safetyOverallChange += abs(safetyChangesWhenApproved[scenarioIdx] - b1.getBar2Process());
-					fuelOverallChange += abs(fuelChangesWhenApproved[scenarioIdx] - b1.getBar1Process());
-					b1.setBar12Progress(safetyChangesWhenApproved[scenarioIdx], fuelChangesWhenApproved[scenarioIdx], 2000);
+				if (!b1.isBarInProgress() && !(b1.getBar2Process() == scenes[scenarioIdx].safetyWhenApproved
+						&& b1.getBar1Process() == scenes[scenarioIdx].fuelEfficiencyWhenApproved)) {
+					safetyOverallChange += abs(scenes[scenarioIdx].safetyWhenApproved - b1.getBar2Process());
+					fuelOverallChange += abs(scenes[scenarioIdx].fuelEfficiencyWhenApproved - b1.getBar1Process());
+					b1.setBar12Progress(scenes[scenarioIdx].safetyWhenApproved, scenes[scenarioIdx].fuelEfficiencyWhenApproved, 1500);
 				}
 			}
 		}
@@ -160,38 +173,31 @@ public class TruckScene extends PApplet {
 		}
 
 		// Build scenarios
-		switch (scenarioIdx) {
-		case 0:
-			break;
-		case 1:
-			if (scenarioTimer + sceneQuestionTimes[1] < millis()) {
-				dashboard.startModeActivation(WeatherMode.SLIPPERY, 8000);
+		if (scenes[scenarioIdx].sceneType == SceneType.VIDEO) {
+			
+			// shorter waiting time, when mode is manually selected
+			if (dashboard.getModeActivationTimer() > scenes[scenarioIdx].questionAfterTime && 
+				sceneAnswers.get(scenarioIdx) != QuestionStatus.UNKNOWN) {
+				initNextScenario();
+				
+			// start mode activation
+			} else if (scenarioTimer + scenes[scenarioIdx].questionAfterTime < millis()) {
+				dashboard.startModeActivation(scenes[scenarioIdx].nextWeatherMode, scenes[scenarioIdx].questionReactTime);
 			}
-			break;
-		case 2:
-			if (scenarioTimer + sceneQuestionTimes[2] < millis()) {
-				dashboard.startModeActivation(WeatherMode.ECO, 8000);
-			}
-			break;
-		case 3:
-			if (scenarioTimer + sceneQuestionTimes[3] < millis()) {
-				dashboard.startModeActivation(WeatherMode.UPHILL, 8000);
-			}
-			break;
-		case 4:
-			if (scenarioTimer + sceneQuestionTimes[4] < millis()) {
-				dashboard.startModeActivation(WeatherMode.WET, 8000);
-			}
-			break;
-		case 5:
+			
+		}
+		
+		// the last scene
+		if (scenarioIdx == scenes.length - 1) {
+			// draw new background
+			scenarios.get(scenarioIdx).draw();
+			
+			// Set text on top of bubbles
 			textSize(46);
 			textAlign(CENTER);
 			fill(255);
 			text(String.format("%c%.1f%%", (safetyOverallChange >= 0) ? '+' : '-', safetyOverallChange), 1170, 640);
 			text(String.format("%c%.1f%%", (fuelOverallChange >= 0) ? '+' : '-', fuelOverallChange * 10), 760, 640);
-			break;
-		default:
-
 		}
 
 		// Handle user inputs and update bar sizes
@@ -206,7 +212,7 @@ public class TruckScene extends PApplet {
 	@Override
 	public void keyReleased() {
 		userCommand = UserCommand.fromKeyboard(key);
-		println(scenarioIdx + ") Key pressed: " + key + "      Command: " + userCommand.getValue());
+		println(scenarioIdx + ") Key pressed: " + key + "      Command: " + userCommand.name());
 	}
 
 	// Serial format:
@@ -226,7 +232,7 @@ public class TruckScene extends PApplet {
 				String[] q = splitTokens(line);
 				if (q != null && q.length > 1 && q[1] != null && q[1].length() > 0) {
 					userCommand = UserCommand.fromSerial(q[1].toLowerCase().charAt(0));
-					println("Mode Selected: " + q[1].charAt(0) + "      Command " + userCommand.getValue());
+					println("Mode Selected: " + q[1].charAt(0) + "      Command " + userCommand.name());
 				}
 			}
 		} catch (Exception e) { }
@@ -268,6 +274,7 @@ public class TruckScene extends PApplet {
 			if (dashboard.hasModeActivationStarted() && dashboard.isWeatherModeChanging()) {
 				dashboard.completeWeatherModeSelection(true);
 				modeChangeDenied = 0;
+				sceneAnswers.set(scenarioIdx, QuestionStatus.APPROVED);
 				return 1;
 			}
 			break;
@@ -275,6 +282,7 @@ public class TruckScene extends PApplet {
 			if (dashboard.hasModeActivationStarted() && dashboard.isWeatherModeChanging()) {
 				dashboard.completeWeatherModeSelection(false);
 				modeChangeDenied = 1;
+				sceneAnswers.set(scenarioIdx, QuestionStatus.DENIED);
 				return -1;
 			}
 			break;

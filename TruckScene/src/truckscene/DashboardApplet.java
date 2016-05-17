@@ -79,6 +79,9 @@ class DashboardApplet extends PApplet {
 	public void draw() {
 		background(0);
 
+		// this.height = (int)(9.0 / 16.0 * (float)this.width);
+		// println(this.height);
+		
         // Mode is changing
         if (isWeatherModeChanging()) {
 	        if (modeActivationTimer + timeToNextMode > millis()) {
@@ -150,5 +153,13 @@ class DashboardApplet extends PApplet {
 	
 	public WeatherMode getWeatherMode(){
 		return weatherMode;
+	}
+	
+	/*
+	 * Returns timer in milliseconds from mode activation, else -1 
+	 */
+	public int getModeActivationTimer(){
+		if (!modeActivationStarted) return -1;
+		return millis() - modeActivationTimer;
 	}
 }
