@@ -13,9 +13,19 @@ public class TwinBar {
 	
 	private float bar1process;
 	private float bar2process;
-	private Color backgroundColor = new Color(105, 105, 105);
-	private Color barColor = new Color(50, 50, 255);
+	private Color backgroundColor = new Color(32, 32, 32);
+	private Color roundedBoxColor = new Color(87, 87, 87);
+	private Color barBackgroundColor = new Color(255, 255, 255);
 	private Color textColor = new Color(255, 255, 255);
+	
+    /* Color values: 
+     * 
+     * Background 32,32,32
+     * Roundedbox: 87, 87, 87
+     * Green: 144, 209, 80
+     * Red: 254, 0, 8
+     * 
+     */
 	
 	private PGraphics pg;
 	private PApplet applet;
@@ -26,10 +36,9 @@ public class TwinBar {
 	private float orginalBar1Pos;
 	private float orginalBar2Pos;
 	
-	public TwinBar(PApplet applet, String bar1, String bar2, Color barColor, int sizeX, int sizeY, float bar2process, float bar1process){
+	public TwinBar(PApplet applet, String bar1, String bar2, int sizeX, int sizeY, float bar2process, float bar1process){
 		this.bar1 = bar1;
 		this.bar2 = bar2;
-		this.barColor = barColor;
 		this.pg = applet.createGraphics(sizeX, sizeY);
 		this.applet = applet;
 		this.bar1process = bar1process;
@@ -46,75 +55,83 @@ public class TwinBar {
 		return this.pg.height;
 	}
 	
-	public void drawBar(PGraphics g, int x, int y, int sx, int sy, float percent) {
-		g.fill(255);
-		g.rect(x,y, sx, sy);
-		g.fill(barColor.getRed(), barColor.getGreen(), barColor.getBlue());
-		g.rect(x,y, (int)(sx*percent), sy);
+	// Set color to Red or Green, based on value (between [-1, 1]).
+	public void setColor(double value) {
+		if (value < 0) {
+			pg.fill(140+(int)(100*(-value)), 0, 0);
+		} else {
+			pg.fill(0, 140+(int)(100*(value)), 0);
+		}
 	}
 	
 	public void draw(int x, int y){
 		pg.beginDraw();
-		pg.fill(backgroundColor.getRed(), backgroundColor.getGreen(), backgroundColor.getBlue());
+		pg.background(backgroundColor.getRed(), backgroundColor.getGreen(), backgroundColor.getBlue());
+		pg.fill(roundedBoxColor.getRed(), roundedBoxColor.getGreen(), roundedBoxColor.getBlue());
+		pg.rect(0, 0, pg.width, pg.height, 10);
+		
+		// UX stuff
+		int barHeight = 35;
+		int barWidth = pg.width - 212 - 300;
+		int barStartX = 300;
+		int bar1StartY = 56;
+		int bar2StartY = 102;
+		int strokeWeight = 3;
+		int halfSize = (int)(barWidth/2.0);
 		
 		// background
-		pg.fill(155,155,155,255);
-		pg.rect(120, (int)(pg.height*0.1), pg.width - 120, (int)(pg.height*0.25));
-		pg.rect(120, (int)(pg.height*0.4), pg.width - 120, (int)(pg.height*0.25));
-		
+		pg.fill(barBackgroundColor.getRed(), barBackgroundColor.getGreen(), barBackgroundColor.getBlue());
+		pg.strokeWeight(strokeWeight);
+		pg.stroke(0, 0, 0);
+		pg.rect(barStartX, bar1StartY, barWidth, barHeight);
+		pg.rect(barStartX, bar2StartY, barWidth, barHeight);
 		
 		// draw bars: Black magic, don't touch to animation logic
 		double bar1Size = bar1process;
 		double bar2Size = bar2process;
 		if (isBarInProgress()) {
-			double process = (double)(applet.millis() - timeStarted) / (double)timeToTarget;  // between  0 - 1
+			double process = (double)(applet.millis() - timeStarted) / (double)timeToTarget;  // value range [0, 1]
 			bar1Size =  bar1process + (orginalBar1Pos - bar1process) * (1.0 - process);
-			bar2Size =  bar2process + (orginalBar2Pos - bar2process) * (1.0 - process);		// between -1 - 1
-			//System.out.println("Process: " + bar1Size + " " + bar2Size + " " + process);
+			bar2Size =  bar2process + (orginalBar2Pos - bar2process) * (1.0 - process);		// value range [-1, 1]
 		}
 		
-		pg.fill(50,50,200,255);
-		int wholeSize = pg.width-120;
-		int halfSize = (int)(wholeSize/2.0);
-		//System.out.println("Process: " + bar1Size + " " + bar2Size + " " + halfSize);
+		// fuel efficiency bar
+		setColor(bar1Size);
+		pg.strokeWeight(strokeWeight);
+		pg.stroke(0, 0, 0);
+		pg.rect(barStartX + halfSize, bar1StartY, (int)(halfSize*bar1Size), barHeight);
 		
-		if (bar1Size < 0) {
-			pg.fill(120+(int)(100*(-bar1Size)), 0, 0);
-		} else {
-			pg.fill(0, 120+(int)(100*(bar1Size)), 0);
-		}
-	
-		pg.rect(60 + wholeSize/2, (int)(pg.height*0.13), (int)(halfSize*bar1Size), 24);
-		
-		if (bar2Size < 0) {
-			pg.fill(120+(int)(100*(-bar2Size)), 0, 0);
-		} else {
-			pg.fill(0, 120+(int)(100*(bar2Size)), 0);
-		}
-		
-		pg.rect(60 + wholeSize/2, (int)(pg.height*0.43), (int)(halfSize*bar2Size), 24);
+		// safety bar
+		setColor(bar2Size);
+		pg.strokeWeight(strokeWeight);
+		pg.stroke(0, 0, 0);
+		pg.rect(barStartX + halfSize, bar2StartY, (int)(halfSize*bar2Size), barHeight);
 		
 		// middle bar
 		pg.fill(0,0,0,255);
-		pg.rect(pg.width/2 - 2, (int)(pg.height*0.1), 4, (int)(pg.height*0.56));
+		pg.rect(barStartX+halfSize-1, bar1StartY-barHeight/2, strokeWeight, 120);
 		
 		// left side texts
-		pg.textSize(14);
-		pg.fill(255,255,255,255);
-		pg.text(bar1, 10, (int)(pg.height*0.25));
-		pg.text(bar2, 10, (int)(pg.height*0.55));
-/*
-		int d = (int)(bar1process * 100.0 + 0.5) - (int)(bar2process * 100.0 + 0.5);
-		pg.text(String.format("%c%d%%", (d < 0) ? ' ' : '+', d), pg.width-45, 64);
-*/
+		pg.textSize(20);
+		pg.textAlign(pg.RIGHT, pg.CENTER);
+		pg.fill(textColor.getRed(), textColor.getGreen(), textColor.getBlue());
+		pg.text(bar1, barStartX-12, bar1StartY+(barHeight/2));
+		pg.text(bar2, barStartX-12, bar2StartY+(barHeight/2));
+
 		pg.endDraw();
 		
 		applet.image(pg, x, y);
 	}
 	
+//	public void drawBar(PGraphics g, int x, int y, int sx, int sy, float percent) {
+//	g.fill(255);
+//	g.rect(x,y, sx, sy);
+//	g.fill(barColor.getRed(), barColor.getGreen(), barColor.getBlue());
+//	g.rect(x,y, (int)(sx*percent), sy);
+//}
+
 	public boolean isBarInProgress() {
 		return applet.millis() - timeStarted < timeToTarget;
-		//return orginalBar1Pos == bar1process && bar2process == orginalBar2Pos;
 	}
 	
 	public float getBar1Process(){
@@ -133,8 +150,8 @@ public class TwinBar {
 		this.bar2process = barprocess2;
 		this.timeStarted = applet.millis();
 		this.timeToTarget = timeToTarget;
-		System.out.println("Process1: " + barprocess1 + " orginal: " + orginalBar1Pos + "  time " + timeToTarget);
-		System.out.println("Process2: " + barprocess2 + " orginal: " + orginalBar2Pos + "  time " + timeToTarget);
+		// System.out.println("Process1: " + barprocess1 + " orginal: " + orginalBar1Pos + "  time " + timeToTarget);
+		// System.out.println("Process2: " + barprocess2 + " orginal: " + orginalBar2Pos + "  time " + timeToTarget);
 		
 	}
 }

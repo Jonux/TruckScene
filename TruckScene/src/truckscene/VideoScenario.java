@@ -26,12 +26,18 @@ public class VideoScenario implements Scenario {
     private float videoStartPos;
     private float videoEndPos;
     
+    // UX shit
+    private final Color backgroundColor = new Color(32, 32, 32);
+    private final int verticalMargin = 42;
+    private final int roundedBoxWidth = 1250;
+    private final int topBarHeight = 285;
+    
     public VideoScenario(PApplet applet, String videoClipName, float videoStartPos, float videoEndPos) {
         this.applet = applet;
         this.videoClipName = videoClipName;
 
-        this.safetyBarSet = new TwinBar(applet, "Fuel Efficiency", "Safety", new Color(0,0,200), (int)(applet.width*0.7), 135, 0.0f, 0.0f);
-        this.barSetBackground = applet.createGraphics(applet.width, 145);
+        this.safetyBarSet = new TwinBar(applet, "Fuel Efficiency", "Safety", roundedBoxWidth, topBarHeight - 2*verticalMargin, 0.0f, 0.0f);
+        this.barSetBackground = applet.createGraphics(roundedBoxWidth, topBarHeight);
         this.startTime = applet.millis();
         
         this.videoEndPos = videoEndPos;
@@ -86,7 +92,7 @@ public class VideoScenario implements Scenario {
         }
 
         barSetBackground.beginDraw();
-        barSetBackground.background(40,40,40);
+        barSetBackground.background(backgroundColor.getRed(), backgroundColor.getGreen(), backgroundColor.getBlue());
         barSetBackground.endDraw();
         
         setBarsStartSizes(safetyProgress, fuelEffProgress);
@@ -98,11 +104,12 @@ public class VideoScenario implements Scenario {
             videoClip.read();
         }
         
-        applet.fill(0,0,0);
+        applet.background(backgroundColor.getRed(), backgroundColor.getGreen(), backgroundColor.getBlue());
         applet.image(videoClip, (applet.width - videoClip.width)/2, barSetBackground.height); //, applet.width, applet.height - barSetBackground.height);
         applet.image(barSetBackground, 0, 0);
 
-        this.safetyBarSet.draw(applet.width/2 - safetyBarSet.getWidth()/2, 5);
+        
+        this.safetyBarSet.draw(applet.width/2 - safetyBarSet.getWidth()/2, verticalMargin);
 
         if (videoClip.time() >= videoEndPos) {
         	return false;
