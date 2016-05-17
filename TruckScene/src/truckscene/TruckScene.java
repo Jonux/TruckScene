@@ -149,7 +149,7 @@ public class TruckScene extends PApplet {
 		// Update bar sizes
 		Scenario s = scenarios.get(scenarioIdx);
 		if (s instanceof VideoScenario) {
-			DoubleBar b1 = ((VideoScenario) s).getSafetyBar();
+			TwinBar b1 = ((VideoScenario) s).getSafetyBar();
 
 			if (serialEvent > 0 || keyEvent > 0
 					|| (modeChangeDenied == 0 && dashboard.hasModeActivationStarted() && !dashboard.isWeatherModeChanging())) {

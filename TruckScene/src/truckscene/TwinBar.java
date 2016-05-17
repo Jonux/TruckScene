@@ -6,7 +6,7 @@ import processing.core.PApplet;
 import processing.core.PConstants;
 import processing.core.PGraphics;
 
-public class DoubleBar {
+public class TwinBar {
 
 	private String bar1;
 	private String bar2;
@@ -26,7 +26,7 @@ public class DoubleBar {
 	private float orginalBar1Pos;
 	private float orginalBar2Pos;
 	
-	public DoubleBar(PApplet applet, String bar1, String bar2, Color barColor, int sizeX, int sizeY, float bar2process, float bar1process){
+	public TwinBar(PApplet applet, String bar1, String bar2, Color barColor, int sizeX, int sizeY, float bar2process, float bar1process){
 		this.bar1 = bar1;
 		this.bar2 = bar2;
 		this.barColor = barColor;

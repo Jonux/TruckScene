@@ -19,7 +19,7 @@ public class VideoScenario implements Scenario {
     private Movie videoClip;
     private String videoClipName;
 
-    private DoubleBar safetyBarSet;
+    private TwinBar safetyBarSet;
     private PGraphics barSetBackground;
     
     private int startTime = 0;
@@ -30,7 +30,7 @@ public class VideoScenario implements Scenario {
         this.applet = applet;
         this.videoClipName = videoClipName;
 
-        this.safetyBarSet = new DoubleBar(applet, "Fuel Efficiency", "Safety", new Color(0,0,200), (int)(applet.width*0.7), 135, 0.0f, 0.0f);
+        this.safetyBarSet = new TwinBar(applet, "Fuel Efficiency", "Safety", new Color(0,0,200), (int)(applet.width*0.7), 135, 0.0f, 0.0f);
         this.barSetBackground = applet.createGraphics(applet.width, 145);
         this.startTime = applet.millis();
         
@@ -39,7 +39,7 @@ public class VideoScenario implements Scenario {
     }
     
     
-    public DoubleBar getSafetyBar() {
+    public TwinBar getSafetyBar() {
     	return safetyBarSet;
     }
     
