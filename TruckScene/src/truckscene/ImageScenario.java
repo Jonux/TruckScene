@@ -51,5 +51,8 @@ public class ImageScenario implements Scenario {
         return true;
     }
     
+    public int getStartTime() {
+    	return startTime;
+    }
 }
 

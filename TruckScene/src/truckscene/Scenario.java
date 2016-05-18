@@ -14,4 +14,7 @@ public interface Scenario {
 	
 	// Stop the scenario
     public void stop();
+    
+    // milliseconds from scenario started
+    public int getStartTime();
 }

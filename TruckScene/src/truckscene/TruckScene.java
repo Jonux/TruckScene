@@ -24,7 +24,7 @@ public class TruckScene extends PApplet {
 	
 	private int scenarioTimer;
 	private int modeChangeDenied = 0;
-	
+
 	/*
 	 * Scenario setup
 	 * 
@@ -35,10 +35,10 @@ public class TruckScene extends PApplet {
 	 */
 	private final SceneData[] scenes = {
 			new SceneData(WeatherMode.UNKNOWN, dataFolderPath + "startView.png"),
-			new SceneData(0.67f, -0.5f, 0.33f, -0.05f, WeatherMode.ECO, WeatherMode.SLIPPERY, 0.0f, 15.0f, 5000, 8000, 5000, videoFolderPath + "scene1.avi"),
-			new SceneData(0.0f, 0.8f, 0.7f, 0.8f, WeatherMode.SLIPPERY, WeatherMode.ECO,  0.0f, 15.0f, 5000, 8000, 5000, videoFolderPath + "scene2.avi"),
-			new SceneData(0.6f, -0.3f, 0.4f, -0.08f, WeatherMode.ECO, WeatherMode.UPHILL, 0.0f, 15.0f, 5000, 8000, 5000, videoFolderPath + "scene3.avi"),
-			new SceneData(0.75f, -0.47f, 0.41f, -0.02f, WeatherMode.ECO, WeatherMode.WET, 0.0f, 15.0f, 5000, 8000, 5000, videoFolderPath + "scene4.avi"),
+			new SceneData(0.67f, -0.5f, 0.33f, -0.05f, WeatherMode.ECO, WeatherMode.SLIPPERY, 0.0f, 15.0f, 2000, 5000, 3000, videoFolderPath + "scene1.avi"),
+			new SceneData(0.0f, 0.8f, 0.7f, 0.8f, WeatherMode.SLIPPERY, WeatherMode.ECO,  0.0f, 15.0f, 2000, 8000, 5000, videoFolderPath + "scene2.avi"),
+			new SceneData(0.6f, -0.3f, 0.4f, -0.08f, WeatherMode.ECO, WeatherMode.UPHILL, 0.0f, 15.0f, 2000, 8000, 5000, videoFolderPath + "scene3.avi"),
+			new SceneData(0.75f, -0.47f, 0.41f, -0.02f, WeatherMode.ECO, WeatherMode.WET, 0.0f, 15.0f, 2000, 8000, 5000, videoFolderPath + "scene4.avi"),
 			new SceneData(WeatherMode.UNKNOWN, dataFolderPath + "summaryView.png")
 	};
 	
@@ -109,6 +109,7 @@ public class TruckScene extends PApplet {
 	private void initNextScenario() {
 		scenarios.get(scenarioIdx).stop();
 		scenarioIdx = (scenarioIdx + 1) % scenarios.size();
+		sceneAnswers.set(scenarioIdx, QuestionStatus.UNKNOWN); // initialize selection
 		
 		println("Setting up scenario idx: " + scenarioIdx);
 		Scenario nextScene = scenarios.get(scenarioIdx);
@@ -202,8 +203,42 @@ public class TruckScene extends PApplet {
 
 		// Handle user inputs and update bar sizes
 		updateBarSizes();
+		
+		// Handle fading events
+		transitionBetweenScenarios();
 	}
 
+	private void transitionBetweenScenarios() {
+		
+		// Handle fade out from video scenarios
+		int fadeTime = 1000;
+		if (scenes[scenarioIdx].sceneType == SceneType.VIDEO) {
+			boolean videoIsEnding = ((VideoScenario)scenarios.get(scenarioIdx)).videoTimeLeft() < fadeTime;
+			boolean userSelectionCompleted = dashboard.getModeActivationTimer() + fadeTime > scenes[scenarioIdx].questionAfterTime && sceneAnswers.get(scenarioIdx) != QuestionStatus.UNKNOWN;
+			
+			int v = 0;
+			if (videoIsEnding || userSelectionCompleted) {
+				if (videoIsEnding) {
+					v = (int)(255 * ((float)fadeTime - ((VideoScenario)scenarios.get(scenarioIdx)).videoTimeLeft()) / fadeTime);
+				} else {
+					v = 255 - (int)(255 * ((float)(scenes[scenarioIdx].questionAfterTime - dashboard.getModeActivationTimer()) / fadeTime));
+				}
+				fill(0, 0, 0, v);
+				rect(0, 0, width, height);
+			}
+		}
+		
+		// Handle fade in
+		int fadeInTime = 1000;
+		if (scenes[scenarioIdx].sceneType == SceneType.VIDEO) {
+			int startT = scenarios.get(scenarioIdx).getStartTime();
+			if (millis() - startT < fadeInTime) {
+				int v = 255 - (int)((float)(millis() - startT) / fadeInTime * 255);
+				fill(0, 0, 0, v);
+				rect(0, 0, width, height);
+			}
+		}
+	}
 
 	
 	/**

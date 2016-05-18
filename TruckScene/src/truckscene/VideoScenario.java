@@ -118,4 +118,16 @@ public class VideoScenario implements Scenario {
         return true;
     }
     
+    public static int floatTimeToMillis(float time) {
+    	return (int)(time*1000.0f);
+    }
+    
+    public float videoTimeLeft() {
+    	return Math.min(Math.max(floatTimeToMillis(videoEndPos) - floatTimeToMillis(videoClip.time()), 0.0f), floatTimeToMillis(videoEndPos));
+    }
+    
+    public int getStartTime() {
+    	return startTime;
+    }
+    
 }
