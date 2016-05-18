@@ -26,7 +26,7 @@ public class VideoScenario implements Scenario {
     private float videoStartPos;
     private float videoEndPos;
     
-    // UX shit
+    // UX stuff
     private final Color backgroundColor = new Color(32, 32, 32);
     private final int verticalMargin = 42;
     private final int roundedBoxWidth = 1250;
@@ -75,7 +75,7 @@ public class VideoScenario implements Scenario {
     }
     
     public void stop(){
-    	videoClip.pause();
+    	videoClip.stop();
     }
     
 

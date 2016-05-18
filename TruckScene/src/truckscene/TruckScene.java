@@ -35,10 +35,10 @@ public class TruckScene extends PApplet {
 	 */
 	private final SceneData[] scenes = {
 			new SceneData(WeatherMode.UNKNOWN, dataFolderPath + "startView.png"),
-			new SceneData(0.67f, -0.5f, 0.33f, -0.05f, WeatherMode.ECO, WeatherMode.SLIPPERY, 15.0f, 35.0f, 5000, 8000, 3000, videoFolderPath + "badWeather.mp4"),
-			new SceneData(0.0f, 0.8f, 0.7f, 0.8f, WeatherMode.SLIPPERY, WeatherMode.ECO, 10.0f, 25.0f, 5000, 8000, 3000, videoFolderPath + "normal_road.mp4"),
-			new SceneData(0.6f, -0.3f, 0.4f, -0.08f, WeatherMode.ECO, WeatherMode.UPHILL, 0.0f, 15.0f, 5000, 8000, 3000, videoFolderPath + "slipperyUphill.mp4"),
-			new SceneData(0.75f, -0.47f, 0.41f, -0.02f, WeatherMode.ECO, WeatherMode.WET, 0.0f, 15.0f, 5000, 8000, 3000, videoFolderPath + "WetWeather.mp4"),
+			new SceneData(0.67f, -0.5f, 0.33f, -0.05f, WeatherMode.ECO, WeatherMode.SLIPPERY, 15.0f, 35.0f, 5000, 8000, 5000, videoFolderPath + "badWeather.mp4"),
+			new SceneData(0.0f, 0.8f, 0.7f, 0.8f, WeatherMode.SLIPPERY, WeatherMode.ECO, 10.0f, 25.0f, 5000, 8000, 5000, videoFolderPath + "normal_road.mp4"),
+			new SceneData(0.6f, -0.3f, 0.4f, -0.08f, WeatherMode.ECO, WeatherMode.UPHILL, 0.0f, 15.0f, 5000, 8000, 5000, videoFolderPath + "slipperyUphill.mp4"),
+			new SceneData(0.75f, -0.47f, 0.41f, -0.02f, WeatherMode.ECO, WeatherMode.WET, 0.0f, 15.0f, 5000, 8000, 5000, videoFolderPath + "WetWeather.mp4"),
 			new SceneData(WeatherMode.UNKNOWN, dataFolderPath + "summaryView.png")
 	};
 	
