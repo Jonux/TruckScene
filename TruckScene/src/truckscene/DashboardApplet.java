@@ -8,15 +8,15 @@ import processing.core.PShape;
 
 class DashboardApplet extends PApplet {
 	
-	final private int screenSizeX = 640;
-	final private int screenSizeY = 480;
+	final private int screenSizeX = 800;
+	final private int screenSizeY = 600;
 	
 	private ArrayList<PShape> images;
 	private ArrayList<PShape> inactiveImages;
 	
 	private String dataFolderPath; // = "data/";
-	private String[] weatherFiles = {"eco.svg", "slippery.svg", "uphill.svg", "wet.svg", "eco.svg"};
-	private String[] weatherFilesI = {"eco_.svg", "slippery_.svg", "uphill_.svg", "wet_.svg", "eco_.svg"};
+	private String[] weatherFiles = {"eco_white.svg", "slippery_white.svg", "hill_white.svg", "rain_white.svg", "eco_white.svg"};
+	private String[] weatherFilesI = {"eco_grey.svg", "slippery_gray.svg", "hill_gray.svg", "rain_gray.svg", "eco_grey.svg"};
 	private String[] activatingMsg = {"ACTIVATING\nECO MODE", "ACTIVATING\nSLIPPERY MODE", "ACTIVATING\nUPHILL MODE", "ACTIVATING\nWET MODE", "DISABLING\nWEATHER MODE"};
 	
 	private int modeActivationTimer;
@@ -56,11 +56,19 @@ class DashboardApplet extends PApplet {
 		
 		// Load weather icons
 		for (String s : weatherFiles){
-			images.add(loadShape(dataFolderPath + "" + s));
+			try {
+				images.add(loadShape(dataFolderPath + "" + s));
+			} catch (Exception e) {
+				println("Unable to load image: " + s);
+			}
 		}
 		// Load inactive weather icons
 		for (String s : weatherFilesI){
-			inactiveImages.add(loadShape(dataFolderPath + "" + s));
+			try {
+				inactiveImages.add(loadShape(dataFolderPath + "" + s));
+			} catch (Exception e) {
+				println("Unable to load image: " + s);
+			}
 		}
 		
 		this.textFont = createFont("Arial Bold", 36);
